@@ -3,7 +3,7 @@ class project repo for cse576 nlp
 
 Revised March 14 to add sample code from pytorch_sentiment_rnn
 
-This code implements several neural networks and associated data processing routines described in the paper, Tang et al., "Effective LSTMs for Target-Dependent Sentiment Classification", arXiv: 1512.01100v2 (Sept. 29, 2016).
+This code implements several neural networks and associated data processing routines described in the paper, Tang et al., "Effective LSTMs for Target-Dependent Sentiment Classification," arXiv: 1512.01100v2 (Sept. 29, 2016).  It also makes use of pre-trained word embeddings discussed in Pennington et al., "GloVe: Global Vectors for Word Representation." (2014).
 
 0. Dependencies include keras, numpy, tqdm, nltk, torch, torchvision, sklearn, and tensorflow.
 This code recommends using a GPU, but it is not strictly necessary - I was able to run it with just the CPU version of tensorflow.  You should be able to install all of these using pip.  I recommend using a virtualenv.
