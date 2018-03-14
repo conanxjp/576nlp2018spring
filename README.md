@@ -8,8 +8,7 @@ described in the paper, Tang et al., "Effective LSTMs for Target-Dependent Senti
 arXiv: 1512.01100v2 (Sept. 29, 2016).
 
 0. Dependencies include keras, numpy, tqdm, nltk, torch, torchvision, sklearn, and tensorflow.
-This code recommends using a GPU, but it is not strictly necessary - I was able to run it with
-You should be able to install all of these using pip.  I recommend using a virtualenv.
+This code recommends using a GPU, but it is not strictly necessary - I was able to run it with just the CPU version of tensorflow.  You should be able to install all of these using pip.  I recommend using a virtualenv.
 
 1. Before running the code here, make a directory one level above
 called "glove_embeddings" and put the following files in it:
