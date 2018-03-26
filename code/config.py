@@ -12,6 +12,8 @@ DATA_PATH = "/data/SemEval2014/"
 DOMAIN = "Restaurants"
 DATA_FILE = "Restaurants_Trial.xml"
 WORD2VEC_FILE = "glove.6B.50d.txt"
+HUNSPELL_PATH = "/usr/share/hunspell/"
+HUNSPELL_DICT = ["en_US.dic", "en_US.aff"]
 
 
 def configure(year, domain, embedding, aim):
