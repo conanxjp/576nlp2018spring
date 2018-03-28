@@ -7,17 +7,12 @@ from nltk.metrics import edit_distance
 import hunspell
 import re
 from tqdm import tqdm
+import argparse
+import sys
 import config as cf
 
-cf.configure('2014', 'rest', 'glove', 'train')
-dataPath = cf.ROOT_PATH + cf.DATA_PATH + cf.DATA_FILE
-embeddingPath = cf.ROOT_PATH + cf.DATA_PATH + cf.WORD2VEC_FILE
-# loading dictionaries for hunspell is a bit wierd, you have to put the dictionaries
-# in a root-derivative folder path e.g. a folder ~/some-other-path is not allowed
-hobj = hunspell.HunSpell(cf.HUNSPELL_PATH + cf.HUNSPELL_DICT[0],
-                         cf.HUNSPELL_PATH + cf.HUNSPELL_DICT[1])
 
-def parse2014(filepath):
+def parse2014(filepath, args):
     """
     parse 2014 raw data in xml format
     only tested for restaurant data
@@ -46,7 +41,7 @@ def parse2014(filepath):
         for category in sentence.find('aspectCategories').findall('aspectCategory'):
             data.loc[i] = [id, text, category.attrib.get('category'), category.attrib.get('polarity')]
             i = i + 1
-    writeCSV(data, cf.ROOT_PATH + cf.DATA_PATH + 'rest_train_2014_raw.csv')
+    writeCSV(data, cf.ROOT_PATH + cf.DATA_PATH + '%s_%s_%s_raw.csv' % (args.domain, args.aim, args.year))
     return data
 
 def writeCSV(dataframe, filepath):
@@ -136,10 +131,10 @@ def correctSpell(word):
     else:
         return word
 
-def createVocabulary(wordData):
+def createTempVocabulary(wordData, args):
     words = sorted(set([word for l in wordData for word in l.split(' ')]))
     global embeddingPath
-    vocabulary = filterWordEmbedding(words, embeddingPath)
+    vocabulary = filterWordEmbedding(words, embeddingPath, args)
     return vocabulary
 
 def splitDashWord(word):
@@ -168,7 +163,7 @@ def embeddingDict(embeddingPath):
     f.close()
     return dictionary
 
-def filterWordEmbedding(words, embeddingPath):
+def filterWordEmbedding(words, embeddingPath, args):
     vocabulary = []
     filteredEmbeddingDict = []
     words = [word.lower() for word in words]
@@ -181,27 +176,121 @@ def filterWordEmbedding(words, embeddingPath):
                 filteredEmbeddingDict.append(line)
     f.close()
     unknownWords = [word for word in words if word not in vocabulary]
-    with open(cf.ROOT_PATH + cf.DATA_PATH + 'glove_6B_filtered.txt', 'w+') as f:
+    with open(dataPath + '%s_filtered_%s.txt' % (cf.WORD2VEC_FILE[0:-4], args.aim), 'w+') as f:
         for line in filteredEmbeddingDict:
             f.write(line)
     with open('unknown.txt', 'w+') as f:
         for i, word in enumerate(unknownWords):
-            f.write(word + '\t' + correctedWords[i] + '\n')
+            f.write(word + '\n')
 
-def loadWordVec(filepath):
-    voc = []
-    i = 0
-    with open(filepath) as f:
+def createVocabulary(trainDictPath, testDictPath, gloveDictPath):
+    dictionary = []
+    with open(trainDictPath) as f:
         for line in f:
-            values = line.split()
-            voc.append(values[0])
-            i = i + 1
-            vector = np.array(values[1:], dtype = 'float32')
-    print(len(voc))
+            dictionary.append(line)
+    f.close()
+    with open(testDictPath) as f:
+        for line in f:
+            dictionary.append(line)
+    f.close()
+    with open(gloveDictPath) as f:
+        miscFlag = True
+        anecFlag = True
+        for line in f:
+            if not (miscFlag or anecFlag):
+                break
+            word = line.split()[0]
+            if miscFlag and word == 'miscellaneous':
+                dictionary.append(line)
+                miscFlag = False
+            if anecFlag and word == 'anecdotes':
+                dictionary.append(line)
+                anecFlag = False
+    f.close()
+    with open(dataPath + '%s_filtered.txt' % cf.WORD2VEC_FILE[0:-4], 'w+') as f:
+        for line in set(dictionary):
+            f.write(line)
     f.close()
 
-data = parse2014(dataPath)
-# wordData = tokenize(data['text'])
-data['text'] = cleanup(data['text'])
-trainVoc = createVocabulary(data['text'])
-writeCSV(data, cf.ROOT_PATH + cf.DATA_PATH + 'rest_train_2014_processed.csv')
+def vectorizedText(textData):
+    """
+    !!!not useful as this point!!!c
+    """
+    embedding = pd.DataFrame(columns = ['id', 'sentence', 'aspect', 'polarity'])
+    dictionary = {}
+    with open(dataPath + '%s_filtered.txt' % cf.WORD2VEC_FILE[0:-4], 'r') as f:
+        for line in f:
+            values = line.split()
+            word = values[0]
+            vector = np.array(values[1:], dtype='float32')
+            dictionary[word] = vector
+    f.close()
+    text = textData['text']
+    for i, sentence in enumerate(text):
+        vectors = []
+        words = word_tokenize(sentence)
+        for word in words:
+            if word in dictionary.keys():
+                vectors.append(dictionary[word])
+            else:
+                vectors.append(np.random.uniform(low=-1.0,high=1.0, size=(300,)))
+
+        embedding.loc[i] = [textData['id'].loc[i], vectors, textData['aspect'].loc[i], textData['polarity'].loc[i]]
+
+    writeCSV(embedding, dataPath + 'test.csv')
+
+    # return embedding
+
+if __name__ == '__main__':
+    argv = sys.argv[1:]                                                     # Slice off the first element of argv (which would just be the name of the program)
+
+    ################################################
+    ##  BEGIN SETTING UP DEFAULT HYPERPARAMETERS  ##
+    ################################################
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--year', type=str, default='2014')                 # Name will be written to the results file  # Seed used for 'random'  module, which will shuffle training data
+    parser.add_argument('--domain', type=str, default='rest')              #
+    parser.add_argument('--embedding', type=str, default='glove')                  #
+    parser.add_argument('--aim', type=str, default='trial')
+    parser.add_argument('--full_run', type=int, choices=[0, 1], default=0)      #
+
+    args, _ = parser.parse_known_args(argv)
+
+    cf.configure(args.year, args.domain, args.embedding, args.aim)
+    dataPath = cf.ROOT_PATH + cf.DATA_PATH
+    embeddingPath = dataPath + cf.WORD2VEC_FILE
+    # loading dictionaries for hunspell is a bit wierd, you have to put the dictionaries
+    # in a root-derivative folder path e.g. a folder ~/some-other-path is not allowed
+    hobj = hunspell.HunSpell(cf.HUNSPELL_PATH + cf.HUNSPELL_DICT[0],
+                             cf.HUNSPELL_PATH + cf.HUNSPELL_DICT[1])
+    parser = cf.PARSER[args.year]
+    if args.full_run == 0:
+        rawDataPath = dataPath + cf.DATA_FILE
+        data = parser(rawDataPath, args)
+        data['text'] = cleanup(data['text'])
+        tempVocabulary = createTempVocabulary(data['text'], args)
+        writeCSV(data, dataPath + '%s_%s_%s_processed.csv' % (args.domain, args.aim, args.year))
+        vectorizedText(data)
+    else:
+        #process train data
+        args.aim = 'train'
+        cf.configure(args.year, args.domain, args.embedding, args.aim)
+        trainDataPath = dataPath + cf.DATA_FILE
+        trainData = parser(trainDataPath, args)
+        trainData['text'] = cleanup(trainData['text'])
+        trainVocabulary = createTempVocabulary(trainData['text'], args)
+        writeCSV(trainData, dataPath + 'rest_train_2014_processed.csv')
+        # process test data
+        args.aim = 'test'
+        cf.configure(args.year, args.domain, args.embedding, args.aim)
+        testDataPath = dataPath + cf.DATA_FILE
+        testData = parser(testDataPath, args)
+        testData['text'] = cleanup(testData['text'])
+        testVocabulary = createTempVocabulary(testData['text'], args)
+        writeCSV(testData, dataPath + 'rest_test_2014_processed.csv')
+
+        # export the final embedding dictionary by combining the dict from train and test data
+        createVocabulary(dataPath + '%s_filtered_train.txt' % cf.WORD2VEC_FILE[0:-4], dataPath + '%s_filtered_test.txt' % cf.WORD2VEC_FILE[0:-4], embeddingPath)
+
+        # export the word embedding for train and test data
+        # vectorizedText(args)
