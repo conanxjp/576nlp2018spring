@@ -42,10 +42,26 @@ def parse2014(filepath, args):
             data.loc[i] = [id, text, category.attrib.get('category'), category.attrib.get('polarity')]
             i = i + 1
     writeCSV(data, cf.ROOT_PATH + cf.DATA_PATH + '%s_%s_%s_raw.csv' % (args.domain, args.aim, args.year))
+    # revised 3/28/18 to add call to writeCOR
+    writeCOR(data, cf.ROOT_PATH + cf.DATA_PATH + '%s_%s_%s_raw.cor' % (args.domain, args.aim, args.year))
     return data
 
 def writeCSV(dataframe, filepath):
     dataframe.to_csv(filepath)
+
+def writeCOR(dataframe, filepath):
+    numex = len(dataframe.index)
+    with open(filepath, 'w') as f:
+        for i in range(numex):
+            f.write(dataframe.loc[i][1] + '\n')
+            f.write(dataframe.loc[i][2] + '\n')
+            if dataframe.loc[i][3] == 'positive':
+                f.write('1' + '\n')
+            elif dataframe.loc[i][3] == 'negative':
+                f.write('-1' + '\n')
+            else:
+                f.write('0' + '\n')
+    f.close()
 
 def tokenize(data):
     wordData = []
@@ -60,6 +76,12 @@ def cleanup(wordData):
     wordData = cleanOp(wordData, re.compile(r':'), dictionary, parseTime)
     wordData = cleanOp(wordData, re.compile('\+'), dictionary, parsePlus)
     wordData = cleanOp(wordData, re.compile(r'\d+'), dictionary, parseNumber)
+    # Revised 3/29/18 to move spell check to separate method
+    # wordData = cleanOp(wordData, re.compile(r''), dictionary, correctSpell)
+    return wordData
+
+def spellcheck(wordData):
+    dictionary = embeddingDict(embeddingPath)
     wordData = cleanOp(wordData, re.compile(r''), dictionary, correctSpell)
     return wordData
 
@@ -71,7 +93,7 @@ def cleanOp(wordData, regex, dictionary, op):
                 if bool(regex.search(word)) and word not in dictionary:
                     word = op(word)
                 newSentence = newSentence + ' ' + word
-            wordData[i] = newSentence
+            wordData[i] = newSentence[1:]   # revised 3/29/18 to avoid space at start of sentence
     return wordData
 
 def parseTime(word):
@@ -171,9 +193,19 @@ def filterWordEmbedding(words, embeddingPath, args):
         for line in tqdm(f):
             values = line.split()
             word = values[0]
-            if word in words:
-                vocabulary.append(word)
-                filteredEmbeddingDict.append(line)
+            # try-except added to debug Unicode warning
+            # to see the word that triggers warning, from command line: python -W error::UnicodeWarning preprocess.py
+            try:
+                if word in words:
+                    vocabulary.append(word)
+                    filteredEmbeddingDict.append(line)
+            except:
+                print("stopping in filterWordEmbedding")
+                print("line: ", line)
+                print("values: ", values)
+                print("word: ", word)
+                print("words: ", words)
+                # exit()
     f.close()
     unknownWords = [word for word in words if word not in vocabulary]
     with open(dataPath + '%s_filtered_%s.txt' % (cf.WORD2VEC_FILE[0:-4], args.aim), 'w+') as f:
@@ -268,8 +300,13 @@ if __name__ == '__main__':
         rawDataPath = dataPath + cf.DATA_FILE
         data = parser(rawDataPath, args)
         data['text'] = cleanup(data['text'])
+        # revised 3/29/18 to create interim data without corrected spellings
+        writeCOR(data, dataPath + '%s_%s_%s_clean_no_spellck.cor' % (args.domain, args.aim, args.year))
+        data['text'] = spellcheck(data['text'])
         tempVocabulary = createTempVocabulary(data['text'], args)
         writeCSV(data, dataPath + '%s_%s_%s_processed.csv' % (args.domain, args.aim, args.year))
+        # revised 3/28/18 to add call to writeCOR
+        writeCOR(data, dataPath + '%s_%s_%s_processed.cor' % (args.domain, args.aim, args.year))
         vectorizedText(data)
     else:
         #process train data
@@ -278,16 +315,27 @@ if __name__ == '__main__':
         trainDataPath = dataPath + cf.DATA_FILE
         trainData = parser(trainDataPath, args)
         trainData['text'] = cleanup(trainData['text'])
+        # revised 3/29/18 to create interim data without corrected spellings
+        writeCOR(trainData, dataPath + 'rest_train_2014_clean_no_spellck.cor')
+        trainData['text'] = spellcheck(trainData['text'])
         trainVocabulary = createTempVocabulary(trainData['text'], args)
         writeCSV(trainData, dataPath + 'rest_train_2014_processed.csv')
+        # revised 3/28/18 to add call to writeCOR
+        writeCOR(trainData, dataPath + 'rest_train_2014_processed.cor')
+        #
         # process test data
         args.aim = 'test'
         cf.configure(args.year, args.domain, args.embedding, args.aim)
         testDataPath = dataPath + cf.DATA_FILE
         testData = parser(testDataPath, args)
         testData['text'] = cleanup(testData['text'])
+        # revised 3/29/18 to create interim data without corrected spellings
+        writeCOR(testData, dataPath + 'rest_test_2014_clean_no_spellck.cor')
+        testData['text'] = spellcheck(testData['text'])
         testVocabulary = createTempVocabulary(testData['text'], args)
         writeCSV(testData, dataPath + 'rest_test_2014_processed.csv')
+        # revised 3/28/18 to add call to writeCOR
+        writeCOR(testData, dataPath + 'rest_test_2014_processed.cor')
 
         # export the final embedding dictionary by combining the dict from train and test data
         createVocabulary(dataPath + '%s_filtered_train.txt' % cf.WORD2VEC_FILE[0:-4], dataPath + '%s_filtered_test.txt' % cf.WORD2VEC_FILE[0:-4], embeddingPath)
