@@ -12,13 +12,11 @@ import sys
 import config as cf
 
 
-def parse2014(filepath, args):
+def parse2014AspectTerm(filepath):
     """
-    parse 2014 raw data in xml format
-    only tested for restaurant data
+    Since no good way of collecting the aspect term words from the raw xml data,
+    this function is using loop to facilitate collecting the terms manually.
     """
-    data = pd.DataFrame(columns = ['id', 'text', 'aspect', 'polarity'])
-    # no good way to pick terms to corresponding aspect term yet
     aspectTerm_dict = {
                         'food': [],
                         'service': [],
@@ -26,6 +24,16 @@ def parse2014(filepath, args):
                         'ambience': [],
                         'anecdotes/miscellaneous': []
                       }
+    tree = et.parse(filepath)
+    root = tree.getroot()
+    sentences = root.findall('sentence');
+
+def parse2014(filepath, args):
+    """
+    parse 2014 raw data in xml format
+    only tested for restaurant data
+    """
+    data = pd.DataFrame(columns = ['id', 'text', 'aspect', 'polarity'])
     tree = et.parse(filepath)
     root = tree.getroot()
     sentences = root.findall('sentence');
@@ -246,7 +254,7 @@ def createVocabulary(trainDictPath, testDictPath, gloveDictPath):
 
 def vectorizedText(textData):
     """
-    !!!not useful as this point!!!c
+    !!!not useful as this point!!!
     """
     embedding = pd.DataFrame(columns = ['id', 'sentence', 'aspect', 'polarity'])
     dictionary = {}
