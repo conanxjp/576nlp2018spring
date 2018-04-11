@@ -313,34 +313,6 @@ def encodeAllData():
     encodeData(trainSampleDataPath, 'train_sample')
     encodeData(testSampleDataPath, 'test_sample')
 
-def vectorizedText(textData):
-    """
-    !!!not useful as this point!!!
-    """
-    embedding = pd.DataFrame(columns = ['id', 'sentence', 'aspect', 'polarity'])
-    dictionary = {}
-    with open(dataPath + '%s_filtered.txt' % cf.WORD2VEC_FILE[0:-4], 'r') as f:
-        for line in f:
-            values = line.split()
-            word = values[0]
-            vector = np.array(values[1:], dtype='float32')
-            dictionary[word] = vector
-    f.close()
-    text = textData['text']
-    for i, sentence in enumerate(text):
-        vectors = []
-        words = word_tokenize(sentence)
-        for word in words:
-            if word in dictionary.keys():
-                vectors.append(dictionary[word])
-            else:
-                vectors.append(np.random.uniform(low=-1.0,high=1.0, size=(300,)))
-
-        embedding.loc[i] = [textData['id'].loc[i], vectors, textData['aspect'].loc[i], textData['polarity'].loc[i]]
-
-    writeCSV(embedding, dataPath + 'test.csv')
-
-    # return embedding
 
 if __name__ == '__main__':
     argv = sys.argv[1:]                                                     # Slice off the first element of argv (which would just be the name of the program)
@@ -366,19 +338,16 @@ if __name__ == '__main__':
                              cf.HUNSPELL_PATH + cf.HUNSPELL_DICT[1])
     parser = cf.PARSER[args.year]
     if args.full_run == 0:
-        # rawDataPath = dataPath + cf.DATA_FILE
-        # data = parser(rawDataPath, args)
-        # data['text'] = cleanup(data['text'])
-        # # revised 3/29/18 to create interim data without corrected spellings
-        # writeCOR(data, dataPath + '%s_%s_%s_clean_no_spellck.cor' % (args.domain, args.aim, args.year))
-        # data['text'] = spellcheck(data['text'])
-        # tempVocabulary = createTempVocabulary(data['text'], args)
-        # writeCSV(data, dataPath + '%s_%s_%s_processed.csv' % (args.domain, args.aim, args.year))
-        # # revised 3/28/18 to add call to writeCOR
-        # writeCOR(data, dataPath + '%s_%s_%s_processed.cor' % (args.domain, args.aim, args.year))
-        # vectorizedText(data)
-
-        encodeAllData()
+        rawDataPath = dataPath + cf.DATA_FILE
+        data = parser(rawDataPath, args)
+        data['text'] = cleanup(data['text'])
+        # revised 3/29/18 to create interim data without corrected spellings
+        writeCOR(data, dataPath + '%s_%s_%s_clean_no_spellck.cor' % (args.domain, args.aim, args.year))
+        data['text'] = spellcheck(data['text'])
+        tempVocabulary = createTempVocabulary(data['text'], args)
+        writeCSV(data, dataPath + '%s_%s_%s_processed.csv' % (args.domain, args.aim, args.year))
+        # revised 3/28/18 to add call to writeCOR
+        writeCOR(data, dataPath + '%s_%s_%s_processed.cor' % (args.domain, args.aim, args.year))
     else:
         #process train data
         args.aim = 'train'
@@ -413,5 +382,6 @@ if __name__ == '__main__':
 
         # sampling from the processed train and test data
         sampleData()
-        # export the word embedding for train and test data
-        # vectorizedText(args)
+
+        # encode all data
+        encodeAllData()
