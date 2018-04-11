@@ -1,2 +1,9 @@
-
+*in*
+2.99/lb
+chickenfeed
+eatable
+lidos
+portobello/gorgonzola/sausage
+sarsaparillas
+sushi/sashimi
 taramasalata

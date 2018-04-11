@@ -12,21 +12,21 @@ import sys
 import config as cf
 
 
-def parse2014AspectTerm(filepath):
-    """
-    Since no good way of collecting the aspect term words from the raw xml data,
-    this function is using loop to facilitate collecting the terms manually.
-    """
-    aspectTerm_dict = {
-                        'food': [],
-                        'service': [],
-                        'price': [],
-                        'ambience': [],
-                        'anecdotes/miscellaneous': []
-                      }
-    tree = et.parse(filepath)
-    root = tree.getroot()
-    sentences = root.findall('sentence');
+# def parse2014AspectTerm(filepath):
+#     """
+#     Since no good way of collecting the aspect term words from the raw xml data,
+#     this function is using loop to facilitate collecting the terms manually.
+#     """
+#     aspectTerm_dict = {
+#                         'food': [],
+#                         'service': [],
+#                         'price': [],
+#                         'ambience': [],
+#                         'anecdotes/miscellaneous': []
+#                       }
+#     tree = et.parse(filepath)
+#     root = tree.getroot()
+#     sentences = root.findall('sentence')
 
 def parse2014(filepath, args):
     """
@@ -47,15 +47,16 @@ def parse2014(filepath, args):
         #     for term in aspectTerms.findall('aspectTerm'):
         #         terms.append(term.attrib.get('term'))
         for category in sentence.find('aspectCategories').findall('aspectCategory'):
-            data.loc[i] = [id, text, category.attrib.get('category'), category.attrib.get('polarity')]
-            i = i + 1
+            if category.attrib.get('polarity') != 'conflict':
+                data.loc[i] = [id, text, category.attrib.get('category'), category.attrib.get('polarity')]
+                i = i + 1
     writeCSV(data, cf.ROOT_PATH + cf.DATA_PATH + '%s_%s_%s_raw.csv' % (args.domain, args.aim, args.year))
     # revised 3/28/18 to add call to writeCOR
     writeCOR(data, cf.ROOT_PATH + cf.DATA_PATH + '%s_%s_%s_raw.cor' % (args.domain, args.aim, args.year))
     return data
 
 def writeCSV(dataframe, filepath):
-    dataframe.to_csv(filepath)
+    dataframe.to_csv(filepath, index = False)
 
 def writeCOR(dataframe, filepath):
     numex = len(dataframe.index)
@@ -252,6 +253,66 @@ def createVocabulary(trainDictPath, testDictPath, gloveDictPath):
             f.write(line)
     f.close()
 
+def sampleData():
+    """
+    To randomly sample a small fraction from the processed train and test data,
+    which will be used for testing the models
+    """
+    trainDataPath = dataPath + cf.TRAIN_FILE
+    testDataPath = dataPath + cf.TEST_FILE
+    train = pd.read_csv(trainDataPath)
+    test = pd.read_csv(testDataPath)
+    trainSample = train.sample(frac = 0.1, replace = False)
+    testSample = test.sample(frac = 0.1, replace = False)
+    writeCSV(trainSample, dataPath + 'rest_train_sample.csv')
+    writeCSV(testSample, dataPath + 'rest_test_sample.csv')
+
+def encodeAllData():
+    """
+    encode the process data into index array in the filtered glove dictionary,
+    which will be used by the
+    """
+    def encodeData(filePath, type):
+        data = pd.read_csv(filePath)
+        texts = data['text']
+        sentences = [word_tokenize(text) for text in texts]
+        textIndex = []
+        encoding = pd.DataFrame(columns = ['id', 'text_encode', 'aspect', 'polarity'])
+        i = 0
+        # for counting the length of the longest sentence
+        max = 0
+        for i, words in enumerate(sentences):
+            sentenceIndex = []
+            for word in words:
+                try:
+                    idx = index.index(word)
+                except ValueError:
+                    idx = -1
+                sentenceIndex.append(idx)
+            if max < len(sentenceIndex):
+                max = len(sentenceIndex)
+            textIndex.append(sentenceIndex)
+        print(max)
+        np.save(dataPath + '%s.npy' % type, np.array(textIndex))
+
+    dictionary = {}
+    with open(dataPath + '%s_filtered.txt' % cf.WORD2VEC_FILE[0:-4], 'r') as f:
+        for line in f:
+            values = line.split()
+            word = values[0]
+            vector = np.array(values[1:], dtype='float32')
+            dictionary[word] = vector
+    f.close()
+    index = list(dictionary.keys())
+    trainDataPath = dataPath + cf.TRAIN_FILE
+    testDataPath = dataPath + cf.TEST_FILE
+    trainSampleDataPath = dataPath + 'rest_train_sample.csv'
+    testSampleDataPath = dataPath + 'rest_test_sample.csv'
+    encodeData(trainDataPath, 'train')
+    encodeData(testDataPath, 'test')
+    encodeData(trainSampleDataPath, 'train_sample')
+    encodeData(testSampleDataPath, 'test_sample')
+
 def vectorizedText(textData):
     """
     !!!not useful as this point!!!
@@ -305,17 +366,19 @@ if __name__ == '__main__':
                              cf.HUNSPELL_PATH + cf.HUNSPELL_DICT[1])
     parser = cf.PARSER[args.year]
     if args.full_run == 0:
-        rawDataPath = dataPath + cf.DATA_FILE
-        data = parser(rawDataPath, args)
-        data['text'] = cleanup(data['text'])
-        # revised 3/29/18 to create interim data without corrected spellings
-        writeCOR(data, dataPath + '%s_%s_%s_clean_no_spellck.cor' % (args.domain, args.aim, args.year))
-        data['text'] = spellcheck(data['text'])
-        tempVocabulary = createTempVocabulary(data['text'], args)
-        writeCSV(data, dataPath + '%s_%s_%s_processed.csv' % (args.domain, args.aim, args.year))
-        # revised 3/28/18 to add call to writeCOR
-        writeCOR(data, dataPath + '%s_%s_%s_processed.cor' % (args.domain, args.aim, args.year))
-        vectorizedText(data)
+        # rawDataPath = dataPath + cf.DATA_FILE
+        # data = parser(rawDataPath, args)
+        # data['text'] = cleanup(data['text'])
+        # # revised 3/29/18 to create interim data without corrected spellings
+        # writeCOR(data, dataPath + '%s_%s_%s_clean_no_spellck.cor' % (args.domain, args.aim, args.year))
+        # data['text'] = spellcheck(data['text'])
+        # tempVocabulary = createTempVocabulary(data['text'], args)
+        # writeCSV(data, dataPath + '%s_%s_%s_processed.csv' % (args.domain, args.aim, args.year))
+        # # revised 3/28/18 to add call to writeCOR
+        # writeCOR(data, dataPath + '%s_%s_%s_processed.cor' % (args.domain, args.aim, args.year))
+        # vectorizedText(data)
+
+        encodeAllData()
     else:
         #process train data
         args.aim = 'train'
@@ -348,5 +411,7 @@ if __name__ == '__main__':
         # export the final embedding dictionary by combining the dict from train and test data
         createVocabulary(dataPath + '%s_filtered_train.txt' % cf.WORD2VEC_FILE[0:-4], dataPath + '%s_filtered_test.txt' % cf.WORD2VEC_FILE[0:-4], embeddingPath)
 
+        # sampling from the processed train and test data
+        sampleData()
         # export the word embedding for train and test data
         # vectorizedText(args)
