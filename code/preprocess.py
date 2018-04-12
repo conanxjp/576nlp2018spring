@@ -11,8 +11,7 @@ import argparse
 import sys
 import config as cf
 
-
-# def parse2014AspectTerm(filepath):
+# def parse2014AspectTerm(filepath):
 #     """
 #     Since no good way of collecting the aspect term words from the raw xml data,
 #     this function is using loop to facilitate collecting the terms manually.
@@ -209,6 +208,7 @@ def filterWordEmbedding(words, embeddingPath, args):
         for line in tqdm(f):
             values = line.split()
             word = values[0]
+            # word = word.decode('utf-8')     # added to remove Unicode warning
             # try-except added to debug Unicode warning
             # to see the word that triggers warning, from command line: python -W error::UnicodeWarning preprocess.py
             try:
@@ -217,10 +217,10 @@ def filterWordEmbedding(words, embeddingPath, args):
                     filteredEmbeddingDict.append(line)
             except:
                 print("stopping in filterWordEmbedding")
-                print("line: ", line)
-                print("values: ", values)
+                # print("line: ", line)
+                # print("values: ", values)
                 print("word: ", word)
-                print("words: ", words)
+                # print("words: ", words)
                 # exit()
     f.close()
     unknownWords = [word for word in words if word not in vocabulary]
