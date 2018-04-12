@@ -256,6 +256,10 @@ def createVocabulary(trainDictPath, testDictPath, gloveDictPath):
                 anecFlag = False
     f.close()
     with open(dataPath + '%s_filtered.txt' % cf.WORD2VEC_FILE[0:-4], 'w+') as f:
+        #  added because atae model requires dictionary file to have first line with 2 numbers:
+        #  <vocabulary size> <vector size>
+        line = str(len(set(dictionary))) + ' 300\n'
+        f.write(line)
         for line in set(dictionary):
             f.write(line)
     f.close()
@@ -304,6 +308,7 @@ def encodeAllData():
 
     dictionary = {}
     with open(dataPath + '%s_filtered.txt' % cf.WORD2VEC_FILE[0:-4], 'r') as f:
+        header = f.readline()
         for line in f:
             values = line.split()
             word = values[0]
