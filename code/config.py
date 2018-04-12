@@ -31,7 +31,8 @@ def configure(year, domain, embedding, aim):
     DATA_FOLDER = "data/SemEval%s/" % year
     domainDict = {"rest": "Restaurants", "laptop": "Laptops"}
     DOMAIN = domainDict[domain]
-    fileDict = {"trial": "Restaurants_Trial.xml", "train": "%s_Train.xml" % DOMAIN, "test": "%s_Test_Data_phaseB.xml" % DOMAIN}
+    # fileDict = {"trial": "Restaurants_Trial.xml", "train": "%s_Train.xml" % DOMAIN, "test": "%s_Test_Data_phaseB.xml" % DOMAIN}
+    fileDict = {"trial": "Restaurants_Trial.xml", "train": "%s_Train.xml" % DOMAIN, "test": "%s_Test.xml" % DOMAIN}
     DATA_FILE = fileDict[aim]
     embeddingDict = {"glove": "glove.6B.300d.txt", "word2vec": "GoogleNews-vectors-negative300.bin"}
     WORD2VEC_FILE = embeddingDict[embedding]

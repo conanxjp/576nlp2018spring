@@ -62,15 +62,22 @@ def writeCOR(dataframe, filepath):
     numex = len(dataframe.index)
     with open(filepath, 'w') as f:
         for i in range(numex):
-            f.write(dataframe.loc[i][1] + '\n')
-            f.write(dataframe.loc[i][2] + '\n')
+            #
             if dataframe.loc[i][3] == 'positive':
+                f.write(dataframe.loc[i][1] + '\n')
+                f.write(dataframe.loc[i][2] + '\n')
                 f.write('1' + '\n')
             elif dataframe.loc[i][3] == 'negative':
+                f.write(dataframe.loc[i][1] + '\n')
+                f.write(dataframe.loc[i][2] + '\n')
                 f.write('-1' + '\n')
-            else:
+            elif dataframe.loc[i][3] == 'neutral':
+                f.write(dataframe.loc[i][1] + '\n')
+                f.write(dataframe.loc[i][2] + '\n')
                 f.write('0' + '\n')
+    #
     f.close()
+    # end of writeCor()
 
 def tokenize(data):
     wordData = []
