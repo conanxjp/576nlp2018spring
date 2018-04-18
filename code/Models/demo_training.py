@@ -7,7 +7,7 @@ import sys
 import argparse
 
 # hyperparameters
-batch_iterations = 11000
+batch_iterations = 30
 batch_size = 32
 full_iterations = 100
 learning_rate = 0.01
@@ -90,10 +90,6 @@ with tf.variable_scope('output_softmax_vars', reuse = tf.AUTO_REUSE):
         regularizer = tf.contrib.layers.l2_regularizer(reg_eta)
     )
 
-
-# tf saver
-saver = tf.train.Saver()
-
 # define lstm model
 def dynamic_lstm(inputs, seqlen, aspects):
 #     inputs = tf.nn.dropout(inputs, keep_prob=1.0)
@@ -146,6 +142,9 @@ correct = tf.equal(tf.argmax(pred, 1), tf.argmax(y, 1))
 accuracy = tf.reduce_mean(tf.cast(correct, tf.float32))
 init = tf.global_variables_initializer()
 
+# tf saver
+saver = tf.train.Saver()
+
 def fullTrain():
     # full dataset training
     test_X, test_y, test_seqlen, test_aspects = u.getData('test')
@@ -162,10 +161,12 @@ def fullTrain():
             loss_test, accuracy_test = sess.run([loss, accuracy], feed_dict = {X: test_X, y: test_y, seqlen: test_seqlen, aspects: test_aspects})
             print('step: %s, test loss: %s, test accuracy: %s' % (i, loss_test, accuracy_test))
             if loss_test > loss_train and accuracy_test > max_accuracy and min_loss > loss_test:
-                saver.save(sess, './biatae_save/biatae_full_train_best')
+                saver.save(sess, '../saved_model/biatae_full_train_best')
                 min_loss = loss_test
                 max_accuracy = accuracy_test
-            saver.save(sess, './biatae_save/biatae_full_train', global_step = 25)
+
+            if i % 10 == 0:
+                saver.save(sess, '../saved_model/biatae_full_train', global_step = i)
 
 def batchTrain():
     # batch training
@@ -183,10 +184,11 @@ def batchTrain():
                 loss_test, accuracy_test = sess.run([loss, accuracy], feed_dict = {X: test_X, y: test_y, seqlen: test_seqlen, aspects: test_aspects})
                 print('step: %s, test loss: %s, test accuracy: %s' % (i, loss_test, accuracy_test))
                 if loss_test > loss_train and accuracy_test > max_accuracy and min_loss > loss_test:
-                    saver.save(sess, './biatae_save/biatae_batch_train_best')
+                    saver.save(sess, '../saved_model/biatae_batch_train_best')
                     min_loss = loss_test
                     max_accuracy = accuracy_test
-                saver.save(sess, './biatae_save/biatae_batch_train', global_step = 1000)
+                if i % 10 == 9:
+                    saver.save(sess, '../saved_model/biatae_batch_train', global_step = i + 1)
 
 if __name__ == '__main__':
     argv = sys.argv[1:]
