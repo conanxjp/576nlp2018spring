@@ -14,7 +14,7 @@ DOMAIN = "Restaurants"
 DATA_FILE = "Restaurants_Trial.xml"
 TRAIN_FILE = "rest_train_2014_processed.csv"
 TEST_FILE = "rest_test_2014_processed.csv"
-WORD2VEC_FILE = "glove.6B.300d.txt"
+WORD2VEC_FILE = "glove.840B.300d.txt"
 HUNSPELL_PATH = "/usr/share/hunspell/"
 HUNSPELL_DICT = ["en_US.dic", "en_US.aff"]
 
@@ -33,9 +33,8 @@ def configure(year, domain, embedding, aim):
     DOMAIN = domainDict[domain]
     fileDict = {"trial": "Restaurants_Trial.xml", "train": "%s_Train.xml" % DOMAIN, "test": "%s_Test_Data_phaseB.xml" % DOMAIN}
     DATA_FILE = fileDict[aim]
-    embeddingDict = {"glove": "glove.6B.300d.txt", "word2vec": "GoogleNews-vectors-negative300.bin"}
+    embeddingDict = {"glove": "glove.840B.300d.txt", "word2vec": "GoogleNews-vectors-negative300.bin"}
     WORD2VEC_FILE = embeddingDict[embedding]
-
 
 
 PARSER = {'2014': pp.parse2014}
