@@ -1,6 +1,6 @@
-def printout(error, pred):
+def printout(dataset, datasplit, error, pred):
     length = 0
-    with open('%s/%s.cor' % ('data', 'test')) as f:
+    with open('%s/%s.cor' % (dataset, datasplit)) as f:
         sentences = f.readlines()
         origin = [];
         length = int(len(sentences) / 3)
@@ -12,4 +12,3 @@ def printout(error, pred):
             e.write('sentence: %s\n' % origin[error[i]][0])
             e.write('aspect: %s\n' % origin[error[i]][1])
             e.write('polarity: %s\tprediction: %s\n\n' % (origin[error[i]][2], pred[i]))
-

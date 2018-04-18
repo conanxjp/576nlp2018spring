@@ -32,7 +32,7 @@ def train(model, train_data, optimizer, epoch_num, batch_size, batch_n):
     return loss_sum[0], loss_sum[2]
 #end 'train'
 
-# Workhorse training function, runs for each "batch" that is from total training data set 
+# Workhorse training function, runs for each "batch" that is from total training data set
 def do_train(model, train_data, optimizer):
     eps0 = 1e-8
     batch_loss = np.array([0.0, 0.0, 0.0])
@@ -62,7 +62,7 @@ def do_train(model, train_data, optimizer):
 
 # Main testing function
 def test(model, test_data, grained):
-    
+
     # Initialization
     evaluator = Evaluators[grained]()
     keys = list(evaluator.keys())
@@ -73,15 +73,15 @@ def test(model, test_data, grained):
     def cross(solution, pred):
         return -np.tensordot(solution, np.log(pred), axes=([0, 1], [0, 1]))
 
-    # For each sentence in the test data, fetch the correct polarity and 
+    # For each sentence in the test data, fetch the correct polarity and
     # determine loss value based on the model's predicted polarity
     for item in tqdm(test_data, desc='Testing progress for this epoch'):
-        sequences, target, tar_scalar, solution =  item['seqs'], item['target'], item['target_index'], item['solution']  
-        pred = model.func_test(sequences, tar_scalar)  
+        sequences, target, tar_scalar, solution =  item['seqs'], item['target'], item['target_index'], item['solution']
+        pred = model.func_test(sequences, tar_scalar)
         loss += cross(solution, pred)
         total_nodes += len(solution)
         result = evaluator.accumulate(solution[-1:], pred[-1:]) # TODO, seems to be useless
-            
+
     # Accuracy statistic for both three-way and binary classification
     acc = evaluator.statistic()
 
@@ -90,7 +90,7 @@ def test(model, test_data, grained):
 
 
 # Used to run test_data through model and print error cases
-def test1(model, test_data, grained):
+def test1(dataset, datasplit, model, test_data, grained):
     evaluator = Evaluators[grained]()
     keys = list(evaluator.keys())
     def cross(solution, pred):
@@ -115,7 +115,7 @@ def test1(model, test_data, grained):
                 e = 1
             error_pred.append(e)
         i = i + 1
-    printout(error_index, error_pred)
+    printout(dataset, datasplit, error_index, error_pred)
 # end 'test1'
 
 ###############################
@@ -123,8 +123,8 @@ def test1(model, test_data, grained):
 ###############################
 
 if __name__ == '__main__':
-    argv = sys.argv[1:]                                                     # Slice off the first element of argv (which would just be the name of the program)                                         
-    
+    argv = sys.argv[1:]                                                     # Slice off the first element of argv (which would just be the name of the program)
+
 
     ################################################
     ##  BEGIN SETTING UP DEFAULT HYPERPARAMETERS  ##
@@ -132,11 +132,11 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--name', type=str, default='lstm')                 # Name will be written to the results file
     parser.add_argument('--seed', type=int, default=int(1000*time.time()))  # Seed used for 'random'  module, which will shuffle training data
-    parser.add_argument('--dim_hidden', type=int, default=300)              # 
-    parser.add_argument('--dim_gram', type=int, default=1)                  # 
+    parser.add_argument('--dim_hidden', type=int, default=300)              #
+    parser.add_argument('--dim_gram', type=int, default=1)                  #
     parser.add_argument('--dataset', type=str, default='data')              # Name will be used to reference folder to find data files in (i.e. data files are in ./data)
-    parser.add_argument('--fast', type=int, choices=[0, 1], default=0)      # 
-    parser.add_argument('--screen', type=int, choices=[0, 1], default=0)    # 
+    parser.add_argument('--fast', type=int, choices=[0, 1], default=0)      #
+    parser.add_argument('--screen', type=int, choices=[0, 1], default=0)    #
     parser.add_argument('--optimizer', type=str, default='ADAGRAD')         # Specifies that 'adagrad' gradient descent algorithm will be used for parameter learning
     parser.add_argument('--grained', type=int, default=3)                   # TODO Not sure what this is for, but it is referenced a lot
     parser.add_argument('--lr', type=float, default=0.01)                   # General learning rate to be used for optimizer?
@@ -174,7 +174,7 @@ if __name__ == '__main__':
 
         # Shuffle training data to avoid completely deterministic results
         random.shuffle(train_data)
-        
+
         # Will hold loss data during training and testing for this epoch
         now = {}
 
@@ -186,15 +186,17 @@ if __name__ == '__main__':
         now['loss_dev'], now['acc_dev'] = test(model, dev_data, args.grained)
         now['loss_test'], now['acc_test'] = test(model, test_data, args.grained)
 
-        # Write the loss data gathered during training and testing to the appropriate sections of 
+        # Write the loss data gathered during training and testing to the appropriate sections of
         # the details dictionary, which will be written to final restults file
-        for key, value in list(now.items()): 
+        for key, value in list(now.items()):
             details[key].append(value)
         with open('result/%s.txt' % args.name, 'w+') as f:
             f.writelines(json.dumps(details))
 
     # Do final run through test data and print error cases
-    test1(model, test_data, args.grained)
+    # test1(model, test_data, args.grained)
+    # revised to tailor to dataset
+    test1(args.dataset, 'test', model, test_data, args.grained)
 
     ########################################
     ##  END TRAINING AND TESTING ON DATA  ##

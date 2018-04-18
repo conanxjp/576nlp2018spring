@@ -11,6 +11,25 @@ import argparse
 import sys
 import config as cf
 
+<<<<<<< HEAD
+=======
+# def parse2014AspectTerm(filepath):
+#     """
+#     Since no good way of collecting the aspect term words from the raw xml data,
+#     this function is using loop to facilitate collecting the terms manually.
+#     """
+#     aspectTerm_dict = {
+#                         'food': [],
+#                         'service': [],
+#                         'price': [],
+#                         'ambience': [],
+#                         'anecdotes/miscellaneous': []
+#                       }
+#     tree = et.parse(filepath)
+#     root = tree.getroot()
+#     sentences = root.findall('sentence')
+
+>>>>>>> 0f6b3d93e06386b26aee5c14b509800e2cf3374e
 def parse2014(filepath, args):
     """
     parse 2014 raw data in xml format
@@ -45,15 +64,22 @@ def writeCOR(dataframe, filepath):
     numex = len(dataframe.index)
     with open(filepath, 'w') as f:
         for i in range(numex):
-            f.write(dataframe.loc[i][1] + '\n')
-            f.write(dataframe.loc[i][2] + '\n')
+            #
             if dataframe.loc[i][3] == 'positive':
+                f.write(dataframe.loc[i][1] + '\n')
+                f.write(dataframe.loc[i][2] + '\n')
                 f.write('1' + '\n')
             elif dataframe.loc[i][3] == 'negative':
+                f.write(dataframe.loc[i][1] + '\n')
+                f.write(dataframe.loc[i][2] + '\n')
                 f.write('-1' + '\n')
-            else:
+            elif dataframe.loc[i][3] == 'neutral':
+                f.write(dataframe.loc[i][1] + '\n')
+                f.write(dataframe.loc[i][2] + '\n')
                 f.write('0' + '\n')
+    #
     f.close()
+    # end of writeCor()
 
 def tokenize(data):
     wordData = []
@@ -188,6 +214,7 @@ def filterWordEmbedding(words, embeddingPath, args):
         for line in tqdm(f):
             values = line.split()
             word = values[0]
+            # word = word.decode('utf-8')     # added to remove Unicode warning
             # try-except added to debug Unicode warning
             # to see the word that triggers warning, from command line: python -W error::UnicodeWarning preprocess.py
             try:
@@ -196,10 +223,10 @@ def filterWordEmbedding(words, embeddingPath, args):
                     filteredEmbeddingDict.append(line)
             except:
                 print("stopping in filterWordEmbedding")
-                print("line: ", line)
-                print("values: ", values)
+                # print("line: ", line)
+                # print("values: ", values)
                 print("word: ", word)
-                print("words: ", words)
+                # print("words: ", words)
                 # exit()
     f.close()
     unknownWords = [word for word in words if word not in vocabulary]
@@ -237,12 +264,20 @@ def createVocabulary(trainDictPath, testDictPath, gloveDictPath):
     dictionary = set(dictionary)
     dictionaryNP = np.zeros((len(dictionary) + 1, 300))
     with open(dataPath + '%s_filtered.txt' % cf.WORD2VEC_FILE[0:-4], 'w+') as f:
+<<<<<<< HEAD
         for i, line in enumerate(dictionary):
             values = line.split()
             try:
                 dictionaryNP[i] = np.asarray(values[-300:], dtype='float32')
             except ValueError:
                 print(joinWord(values[:-300]))
+=======
+        #  added because atae model requires dictionary file to have first line with 2 numbers:
+        #  <vocabulary size> <vector size>
+        line = str(len(set(dictionary))) + ' 300\n'
+        f.write(line)
+        for line in set(dictionary):
+>>>>>>> 0f6b3d93e06386b26aee5c14b509800e2cf3374e
             f.write(line)
     f.close()
     dictionaryNP[-1] = np.random.normal(0, 0.01, [1,300])
@@ -292,6 +327,7 @@ def encodeAllData():
 
     dictionary = {}
     with open(dataPath + '%s_filtered.txt' % cf.WORD2VEC_FILE[0:-4], 'r') as f:
+        header = f.readline()
         for line in f:
             values = line.split()
             word = joinWord(values[:-300])
