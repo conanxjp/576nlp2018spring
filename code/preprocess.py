@@ -11,8 +11,6 @@ import argparse
 import sys
 import config as cf
 
-<<<<<<< HEAD
-=======
 # def parse2014AspectTerm(filepath):
 #     """
 #     Since no good way of collecting the aspect term words from the raw xml data,
@@ -29,7 +27,6 @@ import config as cf
 #     root = tree.getroot()
 #     sentences = root.findall('sentence')
 
->>>>>>> 0f6b3d93e06386b26aee5c14b509800e2cf3374e
 def parse2014(filepath, args):
     """
     parse 2014 raw data in xml format
@@ -264,24 +261,16 @@ def createVocabulary(trainDictPath, testDictPath, gloveDictPath):
     dictionary = set(dictionary)
     dictionaryNP = np.zeros((len(dictionary) + 1, 300))
     with open(dataPath + '%s_filtered.txt' % cf.WORD2VEC_FILE[0:-4], 'w+') as f:
-<<<<<<< HEAD
         for i, line in enumerate(dictionary):
             values = line.split()
             try:
                 dictionaryNP[i] = np.asarray(values[-300:], dtype='float32')
             except ValueError:
                 print(joinWord(values[:-300]))
-=======
-        #  added because atae model requires dictionary file to have first line with 2 numbers:
-        #  <vocabulary size> <vector size>
-        line = str(len(set(dictionary))) + ' 300\n'
-        f.write(line)
-        for line in set(dictionary):
->>>>>>> 0f6b3d93e06386b26aee5c14b509800e2cf3374e
             f.write(line)
     f.close()
     dictionaryNP[-1] = np.random.normal(0, 0.01, [1,300])
-    np.save(dataPath + 'glove_840B', dictionaryNP)
+    np.save(dataPath + 'glove', dictionaryNP)
 
 def sampleData():
     """
@@ -294,8 +283,8 @@ def sampleData():
     test = pd.read_csv(testDataPath)
     trainSample = train.sample(frac = 0.3, replace = False)
     testSample = test.sample(frac = 0.3, replace = False)
-    writeCSV(trainSample, dataPath + 'rest_train_840B_sample.csv')
-    writeCSV(testSample, dataPath + 'rest_test_840B_sample.csv')
+    writeCSV(trainSample, dataPath + 'rest_train_sample.csv')
+    writeCSV(testSample, dataPath + 'rest_test_sample.csv')
 
 def encodeAllData():
     """
@@ -327,7 +316,7 @@ def encodeAllData():
 
     dictionary = {}
     with open(dataPath + '%s_filtered.txt' % cf.WORD2VEC_FILE[0:-4], 'r') as f:
-        header = f.readline()
+        # print(header)
         for line in f:
             values = line.split()
             word = joinWord(values[:-300])
@@ -337,12 +326,12 @@ def encodeAllData():
     index = list(dictionary.keys())
     trainDataPath = dataPath + cf.TRAIN_FILE
     testDataPath = dataPath + cf.TEST_FILE
-    trainSampleDataPath = dataPath + 'rest_train_840B_sample.csv'
-    testSampleDataPath = dataPath + 'rest_test_840B_sample.csv'
-    encodeData(trainDataPath, 'train_840B')
-    encodeData(testDataPath, 'test_840B')
-    encodeData(trainSampleDataPath, 'train_840B_sample')
-    encodeData(testSampleDataPath, 'test_840B_sample')
+    trainSampleDataPath = dataPath + 'rest_train_sample.csv'
+    testSampleDataPath = dataPath + 'rest_test_sample.csv'
+    encodeData(trainDataPath, 'train')
+    encodeData(testDataPath, 'test')
+    encodeData(trainSampleDataPath, 'train_sample')
+    encodeData(testSampleDataPath, 'test_sample')
 
 
 if __name__ == '__main__':
@@ -388,12 +377,12 @@ if __name__ == '__main__':
         trainData = parser(trainDataPath, args)
         trainData['text'] = cleanup(trainData['text'])
         # revised 3/29/18 to create interim data without corrected spellings
-        writeCOR(trainData, dataPath + 'rest_train_2014_840B_clean_no_spellck.cor')
+        writeCOR(trainData, dataPath + 'rest_train_2014_clean_no_spellck.cor')
         trainData['text'] = spellcheck(trainData['text'])
         trainVocabulary = createTempVocabulary(trainData['text'], args)
-        writeCSV(trainData, dataPath + 'rest_train_2014_840B_processed.csv')
+        writeCSV(trainData, dataPath + 'rest_train_2014_processed.csv')
         # revised 3/28/18 to add call to writeCOR
-        writeCOR(trainData, dataPath + 'rest_train_2014_840B_processed.cor')
+        writeCOR(trainData, dataPath + 'rest_train_2014_processed.cor')
         #
         # process test data
         args.aim = 'test'
@@ -402,12 +391,12 @@ if __name__ == '__main__':
         testData = parser(testDataPath, args)
         testData['text'] = cleanup(testData['text'])
         # revised 3/29/18 to create interim data without corrected spellings
-        writeCOR(testData, dataPath + 'rest_test_2014_840B_clean_no_spellck.cor')
+        writeCOR(testData, dataPath + 'rest_test_2014_clean_no_spellck.cor')
         testData['text'] = spellcheck(testData['text'])
         testVocabulary = createTempVocabulary(testData['text'], args)
-        writeCSV(testData, dataPath + 'rest_test_2014_840B_processed.csv')
+        writeCSV(testData, dataPath + 'rest_test_2014_processed.csv')
         # revised 3/28/18 to add call to writeCOR
-        writeCOR(testData, dataPath + 'rest_test_2014_840B_processed.cor')
+        writeCOR(testData, dataPath + 'rest_test_2014_processed.cor')
 
         # export the final embedding dictionary by combining the dict from train and test data
         createVocabulary(dataPath + '%s_filtered_train.txt' % cf.WORD2VEC_FILE[0:-4], dataPath + '%s_filtered_test.txt' % cf.WORD2VEC_FILE[0:-4], embeddingPath)
