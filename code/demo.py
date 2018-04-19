@@ -99,10 +99,6 @@ def dynamic_lstm(inputs, seqlen, aspects):
         # slice the corresponding vai from va
         fw_vai = tf.gather(fw_va, aspects) # batch_size x dim_aspect_embedding
         bk_vai = tf.gather(bk_va, aspects) # batch_size x dim_aspect_embedding
-#         # concatenate vai to inputs
-#         vai_en = [vai for i in range(dim_sentence)]
-#         vai_en = tf.stack(vai_en, axis = 1) # batch_size x dim_sentence x dim_aspect_embedding
-#         inputs = tf.concat([inputs, vai_en], 2)
         forward_lstm_cell = tf.contrib.rnn.LSTMCell(dim_lstm)
         backward_lstm_cell = tf.contrib.rnn.LSTMCell(dim_lstm)
         H, states = tf.nn.bidirectional_dynamic_rnn(
@@ -160,8 +156,8 @@ index = list(dictionary.keys())
 aspectDict = {0: 'Food', 1: 'Price', 2: 'Service', 3: 'Ambience', 4: 'Anecdotes/Miscellaneous'}
 polarity_encode = {0: 'Positive', 1: 'Neutral', 2: 'Negative'}
 with tf.Session() as sess:
-    saver = tf.train.import_meta_graph('./biatae_save/biatae_batch_train-30.meta')
-    saver.restore(sess, tf.train.latest_checkpoint('./biatae_save'))
+    saver = tf.train.import_meta_graph('./saved_model/biatae_full_train_best.meta')
+    saver.restore(sess, tf.train.latest_checkpoint('./saved_model'))
     sen = ''
     while sen != 'quit':
         sen = input('Please enter a restaurant review sentence: (enter "quit" anytime to quit)\n')

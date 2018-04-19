@@ -7,10 +7,10 @@ import sys
 import argparse
 
 # hyperparameters
-batch_iterations = 30
+batch_iterations = 11000
 batch_size = 32
 full_iterations = 100
-learning_rate = 0.01
+learning_rate = 0.001
 reg_eta = 0.001
 
 # dimensionalities
@@ -165,8 +165,8 @@ def fullTrain():
                 min_loss = loss_test
                 max_accuracy = accuracy_test
 
-            if i % 10 == 0:
-                saver.save(sess, '../saved_model/biatae_full_train', global_step = i)
+            if i % 10 == 9:
+                saver.save(sess, '../saved_model/biatae_full_train', global_step = i + 1)
 
 def batchTrain():
     # batch training
