@@ -1,0 +1,4 @@
+Test_accuracy,Train_accuracy,batch_size,dim_ae,dim_lstm,dim_word,iterations,learning_rate
+0.78828364610672,0.996020495891571,50,200,50,200,3000,0.001
+Test_accuracy,Train_accuracy,batch_size,dim_ae,dim_lstm,dim_word,iterations,learning_rate
+0.7780061960220337,0.9948834776878357,0,200,50,200,200,0.01

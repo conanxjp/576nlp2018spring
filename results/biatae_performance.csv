@@ -1,0 +1,14 @@
+Test_accuracy,Train_accuracy,batch_size,dim_ae,dim_lstm,dim_word,iterations,learning_rate
+0.7728674411773682,0.9266628623008728,50,200,50,200,1000,0.001
+Test_accuracy,Train_accuracy,batch_size,dim_ae,dim_lstm,dim_word,iterations,learning_rate
+0.7718396782875061,0.8797612190246582,25,200,50,200,1000,0.001
+Test_accuracy,Train_accuracy,batch_size,dim_ae,dim_lstm,dim_word,iterations,learning_rate
+0.8047276735305786,0.9593518972396851,50,200,50,200,3000,0.001
+Test_accuracy,Train_accuracy,batch_size,dim_ae,dim_lstm,dim_word,iterations,learning_rate
+0.7954779267311096,0.8777714371681213,50,300,300,300,500,0.001
+Test_accuracy,Train_accuracy,batch_size,dim_ae,dim_lstm,dim_word,iterations,learning_rate
+0.7656731605529785,0.8789084553718567,50,200,200,200,500,0.001
+Test_accuracy,Train_accuracy,batch_size,dim_ae,dim_lstm,dim_word,iterations,learning_rate
+0.8088386654853821,0.9607731699943542,0,200,50,200,200,0.01
+
+
