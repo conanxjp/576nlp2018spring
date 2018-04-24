@@ -130,7 +130,7 @@ def dynamic_lstm(inputs, seqlen, aspects):
         r = tf.reshape(tf.matmul(alpha, H), [-1, dim_lstm * 2]) # batch_size x (dim_lstm * 2)
         h_star = tf.tanh(tf.matmul(r, wp) + tf.matmul(hn, wx)) # batch_size x (dim_lstm * 2)
         predict = tf.matmul(h_star, ws) + bs # batch x dim_polarity
-    return predict
+    return alpha
 
 # define operations
 pred = dynamic_lstm(tf.nn.embedding_lookup(u.gloveDict, X), seqlen, aspects)
@@ -185,8 +185,9 @@ with tf.Session() as sess:
             test_X.append(idx)
         test_X = np.pad(test_X, (0, dim_sentence - len(words)), 'constant')
         test_X = np.reshape(test_X, [-1,dim_sentence])
-        test = sess.run(tf.nn.softmax(pred), {X: test_X, y: dummy_y, seqlen: [len(words)], aspects: [0]})
-        answer = np.argmax(test, 1)
+        test = sess.run(pred, {X: test_X, y: dummy_y, seqlen: [len(words)], aspects: [0]})
+        print(test)
+        # answer = np.argmax(test, 1)
         print('\n----------------------------------------------------------------------------------------------------')
         print('Prediction for : "%s" on "%s" aspect is: %s' % (sen, aspectDict[aspect], polarity_encode[answer[0]]))
         print('----------------------------------------------------------------------------------------------------\n')

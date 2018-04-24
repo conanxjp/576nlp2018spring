@@ -4,7 +4,7 @@ import pandas as pd
 from nltk import (word_tokenize, pos_tag)
 from nltk.corpus import sentiwordnet as swn
 from nltk.metrics import edit_distance
-import hunspell
+# import hunspell
 import re
 from tqdm import tqdm
 import argparse

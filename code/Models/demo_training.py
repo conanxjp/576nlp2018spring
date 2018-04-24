@@ -5,19 +5,24 @@ import utils
 import random
 import sys
 import argparse
+import tqdm
+import time
 
 # hyperparameters
 batch_iterations = 11000
 batch_size = 32
 full_iterations = 100
-learning_rate = 0.001
+learning_rate = 0.01
 reg_eta = 0.001
 
+##########################
 # dimensionalities
-dim_lstm = 300
+dim_lstm = 50
+dim_aspect_embedding = 50
+##########################
+
 dim_word = 300
 dim_aspect = 5
-dim_aspect_embedding = 300
 dim_sentence = 80
 dim_polarity = 3
 
@@ -151,9 +156,15 @@ def fullTrain():
     train_X, train_y, train_seqlen, train_aspects = u.getData('train')
     max_accuracy = 0.
     min_loss = 999.
+    results = pd.DataFrame(columns = ['train_accuracy', 'train_loss', 'test_accuracy', 'test_loss'])
+    train_a = []
+    train_l = []
+    test_a = []
+    test_l = []
     with tf.Session() as sess:
         sess.run(init)
         for i in range(full_iterations):
+            # start_time = time.time()
             sess.run(optimizer, feed_dict = {X: train_X, y: train_y, seqlen: train_seqlen, aspects: train_aspects})
     #         if i > 0 and i % 4 == 0:
             loss_train, accuracy_train = sess.run([loss, accuracy], feed_dict = {X: train_X, y: train_y, seqlen: train_seqlen, aspects: train_aspects})
@@ -165,8 +176,14 @@ def fullTrain():
                 min_loss = loss_test
                 max_accuracy = accuracy_test
 
+            # end_time = time.time()
+            print(end_time - start_time)
+            results.loc[i] = [accuracy_train, loss_train, accuracy_test, loss_test]
             if i % 10 == 9:
                 saver.save(sess, '../saved_model/biatae_full_train', global_step = i + 1)
+
+        results.to_csv('../saved_model/results_%s_%s.csv' % (dim_lstm, dim_aspect_embedding), index = False)
+
 
 def batchTrain():
     # batch training
